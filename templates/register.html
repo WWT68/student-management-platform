@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="高校学籍管理系统 - 学生注册页面">
+    <title>学生端注册 - 学籍管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+        }
+        .register-card {
+            width: 100%;
+            max-width: 450px;
+            border: none;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .register-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            color: white;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+            border-color: #198754;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            border: none;
+            background: none;
+            padding: 0;
+            z-index: 10;
+        }
+        .password-toggle:hover {
+            color: #495057;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-container d-flex justify-content-center align-items-center">
+    <div class="card p-4 p-md-5 register-card">
+        <div class="register-header">
+            <div class="register-icon">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h3 class="text-success fw-bold mb-1">学生自主注册</h3>
+            <p class="text-muted small mb-0">创建您的学生账户</p>
+        </div>
+        
+        <!-- Flash 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'x-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form action="/register" method="POST" novalidate>
+            <!-- CSRF 保护 -->
+            {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+            
+            <div class="mb-3">
+                <label for="sno" class="form-label fw-bold">
+                    <i class="bi bi-hash me-1 text-success"></i>学生学号
+                </label>
+                <input 
+                    type="text" 
+                    id="sno"
+                    name="sno" 
+                    class="form-control" 
+                    required 
+                    placeholder="请输入您的真实学号"
+                    autocomplete="username"
+                    autofocus
+                >
+                <div class="invalid-feedback">请输入学号</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="sname" class="form-label fw-bold">
+                    <i class="bi bi-person me-1 text-success"></i>学生姓名
+                </label>
+                <input 
+                    type="text" 
+                    id="sname"
+                    name="sname" 
+                    class="form-control" 
+                    required 
+                    placeholder="请输入您的姓名"
+                    autocomplete="name"
+                >
+                <div class="invalid-feedback">请输入姓名</div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label fw-bold">
+                    <i class="bi bi-lock me-1 text-success"></i>设置登录密码
+                </label>
+                <div class="password-wrapper">
+                    <input 
+                        type="password" 
+                        id="password"
+                        name="password" 
+                        class="form-control" 
+                        required 
+                        minlength="6"
+                        placeholder="长度不少于6位"
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="password-toggle" id="togglePassword" aria-label="显示/隐藏密码">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <div class="form-text"><i class="bi bi-info-circle me-1"></i>密码长度至少6位，建议包含字母和数字</div>
+                <div class="invalid-feedback">密码长度不能少于6位</div>
+            </div>
+            
+            <button type="submit" class="btn btn-success w-100 mb-3 fw-bold py-2">
+                <i class="bi bi-check-lg me-1"></i>提交注册申请
+            </button>
+            
+            <div class="text-center">
+                <a href="/login" class="text-decoration-none text-muted small">
+                    <i class="bi bi-arrow-left me-1"></i>已有账号？返回登录
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 密码显示/隐藏切换
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+    
+    // 表单验证
+    (function() {
+        'use strict';
+        const forms = document.querySelectorAll('form');
+        
+        Array.from(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+</body>
+</html>

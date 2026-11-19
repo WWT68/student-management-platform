@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="高校学籍管理系统 - 奖惩记录">
+    <title>奖惩记录 - 高校学籍管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .award-card {
+            border: none;
+            border-radius: 16px;
+        }
+        .award-table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .award-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .award-table th {
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+        .award-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        .award-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .award-type-good {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        .award-type-bad {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        .navbar-brand {
+            font-weight: 600;
+        }
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+        .stats-badge {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .view-badge {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="bg-light">
+
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/index">
+            <i class="bi bi-mortarboard-fill me-2"></i>学籍管理系统
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/index">
+                    <i class="bi bi-house-door me-1"></i>首页
+                </a>
+                <a class="nav-link" href="/dept">
+                    <i class="bi bi-building me-1"></i>院系管理
+                </a>
+                <a class="nav-link" href="/score">
+                    <i class="bi bi-journal-check me-1"></i>成绩管理
+                </a>
+                <a class="nav-link" href="/stat">
+                    <i class="bi bi-bar-chart-line me-1"></i>数据统计
+                </a>
+                <a class="nav-link active" href="/award">
+                    <i class="bi bi-award me-1"></i>奖惩记录
+                </a>
+                <a class="nav-link" href="/userinfo">
+                    <i class="bi bi-person-circle me-1"></i>个人中心
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text text-white me-3">
+                    <i class="bi bi-shield-check me-1"></i>
+                    {% if session.get('role') == 1 %}学生{% elif session.get('role') == 2 %}教师{% elif session.get('role') == 3 %}管理员{% else %}未登录{% endif %}
+                </span>
+                {% if session.get('role') == 3 %}
+                <div class="dropdown me-3">
+                    <button class="btn btn-outline-warning btn-sm dropdown-toggle" type="button" id="roleDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-arrow-left-right me-1"></i>切换身份
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">切换角色（测试用）</h6></li>
+                        <li><a class="dropdown-item" href="/switch_role/1"><i class="bi bi-person me-2"></i>学生</a></li>
+                        <li><a class="dropdown-item" href="/switch_role/2"><i class="bi bi-person-badge me-2"></i>教师</a></li>
+                        <li><a class="dropdown-item" href="/switch_role/3"><i class="bi bi-shield-shaded me-2"></i>管理员</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+                <span class="navbar-text text-white me-3">
+                    <i class="bi bi-person-check me-1"></i>{{ session.get('username', '未登录') }}
+                </span>
+                <a href="/logout" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i>退出
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 class="mb-4">
+        <i class="bi bi-award text-warning me-2"></i>奖惩记录中心
+        <span class="view-badge ms-2"><i class="bi bi-eye me-1"></i>C_Award_punish 视图</span>
+    </h2>
+
+    <!-- Flash 消息提示 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- 说明卡片 -->
+    <div class="alert alert-info mb-4" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>数据来源：</strong>本页面数据来自数据库视图 <code>C_Award_punish</code>，该视图关联了 Student、Class、Major、Department、Award_punish 五张表，展示学生完整的院系专业班级信息及奖惩记录。
+    </div>
+
+    <div class="card p-4 shadow-sm award-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-check me-2"></i>奖惩记录列表
+            </h5>
+            <span class="stats-badge">
+                <i class="bi bi-award me-1"></i>共 {{ awards|length }} 条记录
+            </span>
+        </div>
+
+        <div class="award-table">
+            {% if awards %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th><i class="bi bi-hash me-1"></i>学号</th>
+                            <th><i class="bi bi-person me-1"></i>姓名</th>
+                            <th><i class="bi bi-building me-1"></i>院系</th>
+                            <th><i class="bi bi-book me-1"></i>专业</th>
+                            <th><i class="bi bi-people me-1"></i>班级</th>
+                            <th><i class="bi bi-tag me-1"></i>奖惩名称</th>
+                            <th><i class="bi bi-file-text me-1"></i>项目详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in awards %}
+                        <tr>
+                            <td><span class="fw-bold text-primary">{{ a[0] }}</span></td>
+                            <td>{{ a[1] }}</td>
+                            <td>{{ a[7] }}</td>
+                            <td>{{ a[5] }}</td>
+                            <td>{{ a[3] }}</td>
+                            <td>
+                                {% if '优秀' in a[9] or '奖学金' in a[9] or '荣誉' in a[9] %}
+                                    <span class="award-badge award-type-good">
+                                        <i class="bi bi-trophy-fill me-1"></i>{{ a[9] }}
+                                    </span>
+                                {% elif '警告' in a[9] or '处分' in a[9] or '作弊' in a[9] %}
+                                    <span class="award-badge award-type-bad">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ a[9] }}
+                                    </span>
+                                {% else %}
+                                    <span class="award-badge bg-secondary">{{ a[9] }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ a[10] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h5 class="mt-3 text-muted">暂无奖惩记录</h5>
+                <p class="text-muted">数据库中未找到任何奖惩数据</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<footer class="mt-5 py-4 text-center text-muted">
+    <div class="container">
+        <small><i class="bi bi-c-circle me-1"></i>2024 高校学籍管理系统</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
